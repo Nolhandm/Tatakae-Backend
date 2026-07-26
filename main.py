@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from database import create_db_and_tables
+from database import create_db_and_tables, get_session
+from services.habitsService import *
+
 
 # Needed so the tables can be generated
 from models import *
@@ -21,6 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"status": "ok"}
+@app.get("/habits")
+def read_habits(session: Session = Depends(get_session)):
+    return get_all_habits(session)
