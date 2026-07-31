@@ -19,9 +19,9 @@ def get_total_xp(session: Session):
         final_xp += QUEST_BASE_XP * hab[1] * (hab[0].time_coeff + hab[0].difficulty_coeff + hab[0].importance_coeff)
     return final_xp
 
-def compute_level():
+def compute_level(session: Session):
 
-    cumul = get_total_xp()
+    cumul = get_total_xp(session)
     level = (LEVEL_INCREASE_XP / 2 - LEVEL_BASE_XP + sqrt(pow(LEVEL_BASE_XP - LEVEL_INCREASE_XP / 2, 2) + 2 * LEVEL_INCREASE_XP * cumul)) / LEVEL_INCREASE_XP + 1
 
     return int(level)

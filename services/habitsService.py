@@ -2,7 +2,7 @@ from sqlmodel import Session, select
 from models import *
 
 # ---------- Gestion habitudes --------------------
-def add_new_habit(session:Session,name, time_coeff, difficulty_coeff, importance_coeff):
+'''def add_new_habit(session:Session, name, time_coeff, difficulty_coeff, importance_coeff):
     if name.strip() == '':
         return
     habit = Habit(
@@ -10,6 +10,13 @@ def add_new_habit(session:Session,name, time_coeff, difficulty_coeff, importance
         time_coeff=time_coeff,
         difficulty_coeff=difficulty_coeff,
         importance_coeff=importance_coeff)
+
+    session.add(habit)
+    session.commit()'''
+
+def add_new_habit(session:Session, habit:Habit):
+    if habit.name.strip() == '':
+        return
 
     session.add(habit)
     session.commit()
@@ -26,7 +33,7 @@ def get_all_checked_habit_ids(session: Session, validation_date : date):
     return session.exec(statement).all()
 
 
-def check_habit(session: Session,habit_id, validation_date):
+def check_habit(session: Session,habit_id, validation_date : date):
     session.add(Validation_habits(habit_id=habit_id, validation_date=validation_date))
     session.commit()
 
