@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session
 from services.habitsService import *
-from services.statsServices import get_total_xp, compute_level, compute_cumul_xp_for_level, compute_xp_for_level, compute_rank
+from services.statsServices import *
 
 
 # Needed so the tables can be generated
@@ -23,6 +23,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ==========================
+# /habits routes
+# ==========================
 
 @app.get("/habits")
 def read_habits(session: Session = Depends(get_session)):
@@ -44,7 +48,19 @@ def validate_habit(habit_id: int, validation_date: date, session: Session = Depe
 @app.delete("/habits/{habit_id}/check")
 def unvalidate_habit(habit_id: int, validation_date: date, session: Session = Depends(get_session)):
     uncheck_habit(session, habit_id, validation_date)
-    return {"ok": True}
+    return 200
+
+@app.delete("/habits/{habit_id}")
+def delete_habits_from_id(habit_id: int, session: Session = Depends(get_session)):
+    try:
+        delete_habit(session, habit_id)
+        return 200
+    except ValueError:
+        return 404
+
+# ==========================
+# /character routes
+# ==========================
 
 @app.get("/character/stats")
 def get_character_stats(session: Session = Depends(get_session)):

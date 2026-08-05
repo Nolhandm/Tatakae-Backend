@@ -2,17 +2,6 @@ from sqlmodel import Session, select
 from models import *
 
 # ---------- Gestion habitudes --------------------
-'''def add_new_habit(session:Session, name, time_coeff, difficulty_coeff, importance_coeff):
-    if name.strip() == '':
-        return
-    habit = Habit(
-        name=name,
-        time_coeff=time_coeff,
-        difficulty_coeff=difficulty_coeff,
-        importance_coeff=importance_coeff)
-
-    session.add(habit)
-    session.commit()'''
 
 def add_new_habit(session:Session, habit:Habit):
     if habit.name.strip() == '':
@@ -24,6 +13,13 @@ def add_new_habit(session:Session, habit:Habit):
 def get_all_habits(session:Session):
     statement = select(Habit)
     return session.exec(statement).all()
+
+def delete_habit(session:Session, habit_id:int):
+    habit = session.get(Habit, habit_id)
+    if habit is None:
+        raise ValueError(f"L'habitude avec l'ID {habit_id} n'existe pas.")
+    session.delete(habit)
+    session.commit()
 
 # ----------- Validation ------------------
 
