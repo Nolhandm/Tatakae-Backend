@@ -18,6 +18,10 @@ def delete_habit(session:Session, habit_id:int):
     habit = session.get(Habit, habit_id)
     if habit is None:
         raise ValueError(f"L'habitude avec l'ID {habit_id} n'existe pas.")
+    statement = select(Validation_habits).where(Validation_habits.habit_id == habit_id)
+    validation_habits = session.exec(statement).all()
+    for validation in validation_habits:
+        session.delete(validation)
     session.delete(habit)
     session.commit()
 
