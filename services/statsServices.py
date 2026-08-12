@@ -10,8 +10,8 @@ LEVEL_INCREASE_XP = 100
 def get_total_xp(session: Session):
     # Get number of checks for each quest
     statement = (select(Quest, func.count().label('total'))
-                     .join(QuestValidation, QuestValidation.habit_id == Quest.habit_id)
-                     .group_by(Quest.habit_id))
+                     .join(QuestValidation, QuestValidation.quest_id == Quest.quest_id)
+                     .group_by(Quest.quest_id))
     result = session.exec(statement).all()
 
     final_xp = 0
