@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session
-from services.questsService import *
-from services.statsServices import *
+import services.questsService as questService
+import services.statsServices as statsService
+from sqlmodel import Session
 
 
 # Needed so the tables can be generated
@@ -29,31 +30,30 @@ app.add_middleware(
 # ==========================
 
 @app.get("/quests")
-def read_quests(session: Session = Depends(get_session)):
-    return get_all_quests(session)
+def get_all_quests(session: Session = Depends(get_session)):
+    return questService.get_all_quests(session)
 
-@app.post("/quests/create")
+@app.post("/quests")
 def create_quest(quest: Quest, session: Session = Depends(get_session)):
-    add_new_quest(session, quest)
+    questService.create_quest(session, quest)
     return 200
 
 @app.get("/quests/checked")
-def read_checked_quests(validation_date: date, session: Session = Depends(get_session)):
-    return get_all_checked_quests_ids(session, validation_date)
+def get_all_checked_quests_ids_at_date(validation_date: date, session: Session = Depends(get_session)):
+    return questService.get_all_checked_quests_ids_at_date(session, validation_date)
 
 @app.post("/quests/{quest_id}/check")
-def validate_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
-    return check_quest(session, quest_id, validation_date)
+def check_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
+    return questService.check_quest(session, quest_id, validation_date)
 
-@app.delete("/quests/{quest_id}/check")
-def unvalidate_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
-    uncheck_quest(session, quest_id, validation_date)
-    return 200
+@app.post("/quests/{quest_id}/uncheck")
+def uncheck_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
+    return questService.uncheck_quest(session, quest_id, validation_date)
 
 @app.delete("/quests/{quest_id}")
-def delete_quest_from_id(quest_id: int, session: Session = Depends(get_session)):
+def delete_quest(quest_id: int, session: Session = Depends(get_session)):
     try:
-        delete_quest(session, quest_id)
+        questService.delete_quest(session, quest_id)
         return 200
     except ValueError:
         return 404
@@ -64,11 +64,11 @@ def delete_quest_from_id(quest_id: int, session: Session = Depends(get_session))
 
 @app.get("/character/stats")
 def get_character_stats(session: Session = Depends(get_session)):
-    total_xp = get_total_xp(session)
-    level = compute_level(session)
-    cumul_xp_previous_level = compute_cumul_xp_for_level(level - 1)
-    xp_needed_this_level = compute_xp_for_level(level)
-    rank = compute_rank()
+    total_xp = statsService.get_total_xp(session)
+    level = statsService.compute_level(session)
+    cumul_xp_previous_level = statsService.compute_cumul_xp_for_level(level - 1)
+    xp_needed_this_level = statsService.compute_xp_for_level(level)
+    rank = statsService.compute_rank()
 
     return {
         "total_xp": total_xp,

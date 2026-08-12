@@ -3,7 +3,7 @@ from models import *
 
 # ---------- Gestion quêtes --------------------
 
-def add_new_quest(session:Session, quest:Quest):
+def create_quest(session:Session, quest:Quest):
     if quest.name.strip() == '':
         return
 
@@ -27,7 +27,7 @@ def delete_quest(session:Session, quest_id:int):
 
 # ----------- Validation ------------------
 
-def get_all_checked_quests_ids(session: Session, validation_date : date):
+def get_all_checked_quests_ids_at_date(session: Session, validation_date : date):
 
     statement = select(QuestValidation.quest_id).where(QuestValidation.validation_date == validation_date)
     return session.exec(statement).all()
@@ -36,6 +36,7 @@ def get_all_checked_quests_ids(session: Session, validation_date : date):
 def check_quest(session: Session,quest_id, validation_date : date):
     session.add(QuestValidation(quest_id=quest_id, validation_date=validation_date))
     session.commit()
+    return True
 
 def uncheck_quest(session: Session, quest_id, validation_date):
     statement = (select(QuestValidation)
@@ -46,3 +47,4 @@ def uncheck_quest(session: Session, quest_id, validation_date):
 
     session.delete(val_quest)
     session.commit()
+    return True
