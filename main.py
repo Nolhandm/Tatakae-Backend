@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session
-from services.habitsService import *
+from services.questsService import *
 from services.statsServices import *
 
 
@@ -25,35 +25,35 @@ app.add_middleware(
 )
 
 # ==========================
-# /habits routes
+# /quests routes
 # ==========================
 
-@app.get("/habits")
-def read_habits(session: Session = Depends(get_session)):
-    return get_all_habits(session)
+@app.get("/quests")
+def read_quests(session: Session = Depends(get_session)):
+    return get_all_quests(session)
 
-@app.post("/habits/create")
-def create_habits(habit: Habit, session: Session = Depends(get_session)):
-    add_new_habit(session, habit)
+@app.post("/quests/create")
+def create_quest(quest: Quest, session: Session = Depends(get_session)):
+    add_new_quest(session, quest)
     return 200
 
-@app.get("/habits/checked")
-def read_checked_habits(validation_date: date, session: Session = Depends(get_session)):
-    return get_all_checked_habit_ids(session, validation_date)
+@app.get("/quests/checked")
+def read_checked_quests(validation_date: date, session: Session = Depends(get_session)):
+    return get_all_checked_quests_ids(session, validation_date)
 
-@app.post("/habits/{habit_id}/check")
-def validate_habit(habit_id: int, validation_date: date, session: Session = Depends(get_session)):
-    return check_habit(session, habit_id, validation_date)
+@app.post("/quests/{quest_id}/check")
+def validate_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
+    return check_quest(session, quest_id, validation_date)
 
-@app.delete("/habits/{habit_id}/check")
-def unvalidate_habit(habit_id: int, validation_date: date, session: Session = Depends(get_session)):
-    uncheck_habit(session, habit_id, validation_date)
+@app.delete("/quests/{quest_id}/check")
+def unvalidate_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
+    uncheck_quest(session, quest_id, validation_date)
     return 200
 
-@app.delete("/habits/{habit_id}")
-def delete_habits_from_id(habit_id: int, session: Session = Depends(get_session)):
+@app.delete("/quests/{quest_id}")
+def delete_quest_from_id(quest_id: int, session: Session = Depends(get_session)):
     try:
-        delete_habit(session, habit_id)
+        delete_quest(session, quest_id)
         return 200
     except ValueError:
         return 404

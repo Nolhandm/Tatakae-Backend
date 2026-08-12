@@ -8,10 +8,10 @@ LEVEL_BASE_XP = 1000
 LEVEL_INCREASE_XP = 100
 
 def get_total_xp(session: Session):
-    # Get number of checks for each habit
-    statement = (select(Habit, func.count().label('total'))
-                     .join(Validation_habits, Validation_habits.habit_id == Habit.habit_id)
-                     .group_by(Habit.habit_id))
+    # Get number of checks for each quest
+    statement = (select(Quest, func.count().label('total'))
+                     .join(QuestValidation, QuestValidation.habit_id == Quest.habit_id)
+                     .group_by(Quest.habit_id))
     result = session.exec(statement).all()
 
     final_xp = 0
