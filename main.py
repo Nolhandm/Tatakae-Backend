@@ -1,9 +1,12 @@
+from fastapi import HTTPException, status
+
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session
 import services.questsService as questService
 import services.statsServices as statsService
+import services.arcsService as arcsService
 from sqlmodel import Session
 
 
@@ -35,8 +38,10 @@ def get_all_quests(session: Session = Depends(get_session)):
 
 @app.post("/quests")
 def create_quest(quest: Quest, session: Session = Depends(get_session)):
-    questService.create_quest(session, quest)
-    return 200
+    try :
+        return questService.create_quest(session, quest)
+    except Exception as e :
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @app.get("/quests/checked")
 def get_all_checked_quests_ids_at_date(validation_date: date, session: Session = Depends(get_session)):
@@ -53,10 +58,29 @@ def uncheck_quest(quest_id: int, validation_date: date, session: Session = Depen
 @app.delete("/quests/{quest_id}")
 def delete_quest(quest_id: int, session: Session = Depends(get_session)):
     try:
-        questService.delete_quest(session, quest_id)
-        return 200
-    except ValueError:
-        return 404
+        return questService.delete_quest(session, quest_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e :
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# ==========================
+# /arcs routes
+# ==========================
+
+@app.get("/arcs")
+def get_all_arcs(session: Session = Depends(get_session)):
+    return arcsService.get_all_arcs(session)
+
+@app.post("/arcs")
+def create_arc(arc: Arc, session: Session = Depends(get_session)):
+    try:
+        return arcsService.create_arc(session, arc)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e :
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 # ==========================
 # /character routes
