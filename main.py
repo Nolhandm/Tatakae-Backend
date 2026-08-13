@@ -92,7 +92,7 @@ def get_character_stats(session: Session = Depends(get_session)):
     level = statsService.compute_level(session)
     cumul_xp_previous_level = statsService.compute_cumul_xp_for_level(level - 1)
     xp_needed_this_level = statsService.compute_xp_for_level(level)
-    rank = statsService.compute_rank()
+    rank = statsService.compute_rank(level)
 
     return {
         "total_xp": total_xp,
