@@ -8,6 +8,7 @@ import services.questsService as questService
 import services.statsServices as statsService
 import services.arcsService as arcsService
 from sqlmodel import Session
+from dataclasses import dataclass
 
 
 # Needed so the tables can be generated
@@ -88,6 +89,7 @@ def create_arc(arc: Arc, session: Session = Depends(get_session)):
 
 @app.get("/character/stats")
 def get_character_stats(session: Session = Depends(get_session)):
+
     total_xp = statsService.get_total_xp(session)
     level = statsService.compute_level(session)
     cumul_xp_previous_level = statsService.compute_cumul_xp_for_level(level - 1)
@@ -99,5 +101,5 @@ def get_character_stats(session: Session = Depends(get_session)):
         "level": level,
         "current_xp_in_level": total_xp - cumul_xp_previous_level,
         "xp_needed_this_level": xp_needed_this_level,
-        "rank": rank
+        "rank": 22
     }

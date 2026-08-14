@@ -2,15 +2,8 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 from models import *
 from math import sqrt, pow, floor
+from config import *
 
-# Calculer l'XP pour un jour et ajouter 10% de cette valeur à chaque niveau, on arrivera à un niveau final environ 10 fois supérieur à celui de base et on devrait arriver au niv 100 au bout de 500j
-
-QUEST_BASE_XP = 1
-LEVEL_BASE_XP = 1000
-LEVEL_INCREASE_XP = LEVEL_BASE_XP * 0.1
-MAX_LEVEL = 100
-
-RANK_NUMBER = 23
 
 def get_total_xp(session: Session):
     # Get number of checks for each quest
