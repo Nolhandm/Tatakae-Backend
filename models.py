@@ -1,7 +1,27 @@
 from datetime import date
+import enum
 
 from sqlmodel import SQLModel,Field
 from typing import Optional
+
+class QuestFrequencyMode(enum.StrEnum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+    OCCASIONAL = "OCCASIONAL"
+
+    def is_valid_frequency(self, value: int) -> bool:
+
+        match self:
+            case QuestFrequencyMode.DAILY:
+                return value == 1
+            case QuestFrequencyMode.WEEKLY:
+                return value >= 1 and value < 7
+            case QuestFrequencyMode.MONTHLY:    
+                return value >= 1 and value < 5
+            case QuestFrequencyMode.OCCASIONAL:
+                return value == 0
+            
 
 # Table des Quêtes
 class Quest(SQLModel, table=True):
@@ -17,6 +37,8 @@ class Quest(SQLModel, table=True):
     difficulty_coeff: int = Field(nullable=False, ge=1, le=10)
     importance_coeff: int = Field(nullable=False, ge=1, le=10)
     arc_id : int = Field(nullable=True, foreign_key='Arcs.arc_id')
+    frequency_mode: QuestFrequencyMode = Field(nullable=False, default=QuestFrequencyMode.OCCASIONAL)
+    frequency: int = Field(nullable=True, ge=1, lt=7)
 
 # Table de validation des quêtes
 class QuestValidation(SQLModel, table=True):

@@ -4,7 +4,7 @@
 QUEST_BASE_XP = 10
 
 # XP pour le premier niveau
-LEVEL_BASE_XP = 100
+LEVEL_BASE_XP = 1000
 
 # Increment d'XP pour chaque niveau
 LEVEL_INCREASE_XP = LEVEL_BASE_XP * 0.1
