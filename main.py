@@ -43,13 +43,6 @@ def create_quest(quest: Quest, session: Session = Depends(get_session)):
     except Exception as e :
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-@app.get("/quests/checked")
-def get_all_checked_quests_ids_during_period(start_date: date, end_date: date, session: Session = Depends(get_session)):
-    try :
-        return questService.get_all_checked_quests_ids_during_period(session, start_date, end_date)
-    except Exception as e :
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
 @app.post("/quests/{quest_id}/check")
 def check_quest(quest_id: int, validation_date: date, session: Session = Depends(get_session)):
     return questService.check_quest(session, quest_id, validation_date)
@@ -67,6 +60,19 @@ def delete_quest(quest_id: int, session: Session = Depends(get_session)):
     except Exception as e :
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
+@app.get("/quests/status")
+def get_all_quests_status_during_period(start_date: date, end_date: date, session: Session = Depends(get_session)):
+    try:
+        return questService.get_all_quests_status_during_period(session, start_date, end_date)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) 
+
+@app.get("/quests/{quest_id}/status")
+def get_quest_status_during_period(quest_id: int, start_date: date, end_date: date, session: Session = Depends(get_session)):
+    try:
+        return questService.get_quest_status_during_period(session, quest_id, start_date, end_date)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))    
 
 # ==========================
 # /arcs routes
