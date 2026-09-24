@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session
 import services.questsService as questService
-import services.characterServices as characterService
+import services.statsService as statsService
 import services.arcsService as arcsService
 from sqlmodel import Session
 from dataclasses import dataclass
@@ -60,6 +60,15 @@ def delete_quest(quest_id: int, session: Session = Depends(get_session)):
     except Exception as e :
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
+@app.post("/quests/modify")
+def modify_quest(updated_quest: Quest, session: Session = Depends(get_session)):
+    try:
+        return questService.modify_quest(session, updated_quest)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 @app.get("/quests/status")
 def get_all_quests_status_during_period(start_date: date, end_date: date, session: Session = Depends(get_session)):
     try:
@@ -97,11 +106,11 @@ def create_arc(arc: Arc, session: Session = Depends(get_session)):
 
 @app.get("/character/stats")
 def get_character_stats(session: Session = Depends(get_session)):
-
+    
     return {
-        "actual_level": characterService.compute_actual_level(session),
-        "actual_rank": characterService.compute_actual_rank(session),
-        "actual_xp": characterService.compute_actual_xp(session),
-        "xp_needed": characterService.compute_xp_needed_to_finish_actual_level(session),
-        "total_xp_cumulated": characterService.compute_total_xp_cumulated(session)
+        "actual_level": statsService.compute_actual_level(session),
+        "actual_rank": statsService.compute_actual_rank(session),
+        "actual_xp": statsService.compute_actual_xp(session),
+        "xp_needed": statsService.compute_xp_needed_to_finish_actual_level(session),
+        "total_xp_cumulated": statsService.compute_total_xp_cumulated(session)
     }

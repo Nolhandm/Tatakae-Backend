@@ -1,6 +1,7 @@
 
 
 from sqlmodel import Session, select
+from config import QUEST_BASE_XP
 from models import *
 from datetime import timedelta
 from utils import get_period_start, get_previous_period_date
@@ -37,15 +38,111 @@ def delete_quest(session:Session, quest_id:int):
     for validation in questValidations:
         session.delete(validation)
 
+    statement = select(QuestVersionHistory).where(QuestVersionHistory.quest_id == quest_id)
+    questVersions = session.exec(statement).all()
+    for questV in questVersions:
+        session.delete(questV)
+
     # Remove the quest
     session.delete(quest)
     session.commit()
     return quest
 
+# ---------- Historique et modification --------------------
+
+def getQuestVersionHistoryAtDate(session : Session, quest_id : int, ref_date:date) -> QuestVersionHistory:
+    statement = (
+            select(QuestVersionHistory)
+            .where(QuestVersionHistory.quest_id == quest_id)
+            .where(ref_date < QuestVersionHistory.valid_before)
+            .order_by(QuestVersionHistory.valid_before.asc(), QuestVersionHistory.version_id)
+        )
+    return session.exec(statement).first()
+
+def modify_quest(session:Session, updated_quest:Quest):
+    existing_quest = session.get(Quest, updated_quest.quest_id)
+
+    # Vérification basiques
+    if existing_quest is None:
+        raise ValueError(f"La quête avec l'ID {updated_quest.quest_id} n'existe pas.")
+
+    if updated_quest.name.strip() == '':
+        raise Exception('quest name is required')
+
+    if not (QuestFrequencyMode)(updated_quest.frequency_mode).is_valid_frequency(updated_quest.frequency):
+        raise Exception(f'frequency {updated_quest.frequency} is not valid for frequency_mode {updated_quest.frequency_mode}')
+
+    today = date.today()
+
+    # Vérifier si un historique de la quête a déjà été réalisé aujourd'hui (pas besoin d'en enregister si c'est le cas)
+    statement = (
+            select(QuestVersionHistory)
+            .where((QuestVersionHistory.quest_id == updated_quest.quest_id) & (QuestVersionHistory.valid_before == today))
+        )
+    has_history_today = session.exec(statement).first() is not None
+    if(not has_history_today):
+
+        modified = (
+            existing_quest.time_coeff != updated_quest.time_coeff 
+            or existing_quest.difficulty_coeff != updated_quest.difficulty_coeff 
+            or existing_quest.importance_coeff != updated_quest.importance_coeff
+            or existing_quest.frequency_mode != updated_quest.frequency_mode
+            or existing_quest.frequency != updated_quest.frequency)
+        
+        if(modified):
+            session.add(QuestVersionHistory(
+                quest_id=existing_quest.quest_id, 
+                valid_before=today, 
+                time_coeff=existing_quest.time_coeff,
+                difficulty_coeff=existing_quest.difficulty_coeff,
+                importance_coeff=existing_quest.importance_coeff,
+                frequency_mode=existing_quest.frequency_mode, 
+                frequency=existing_quest.frequency
+            ))
+
+    # Mettre à jour les champs de la quête 
+    existing_quest.name = updated_quest.name
+    existing_quest.arc_id = updated_quest.arc_id # Faudrait vérifier son existence !
+    existing_quest.time_coeff = updated_quest.time_coeff
+    existing_quest.difficulty_coeff = updated_quest.difficulty_coeff 
+    existing_quest.importance_coeff = updated_quest.importance_coeff
+    existing_quest.frequency_mode = updated_quest.frequency_mode
+    existing_quest.frequency = updated_quest.frequency
+    session.add(existing_quest)
+
+    # Mettre à jour la validation d'aujourd'hui si elle existe
+    statement = (
+        select(QuestValidation)
+        .where(QuestValidation.quest_id == updated_quest.quest_id)
+        .where(QuestValidation.validation_date == today)
+    )
+    validation = session.exec(statement).first()
+
+    if validation is not None:
+        validation.xp_earned = QUEST_BASE_XP * (
+            updated_quest.time_coeff + updated_quest.difficulty_coeff + updated_quest.importance_coeff
+        )
+        session.add(validation)
+
+    session.commit()
+    session.refresh(existing_quest)
+    return existing_quest
+
 # ----------- Validation ------------------
 
 def check_quest(session: Session,quest_id: int, validation_date : date):
-    session.add(QuestValidation(quest_id=quest_id, validation_date=validation_date))
+    quest = session.get(Quest, quest_id)
+    if quest is None:
+        raise ValueError(f"La quête avec l'ID {quest_id} n'existe pas.")
+
+    # Vérifier s'il existe une autre version de cette quête 
+    version = getQuestVersionHistoryAtDate(session=session, quest_id=quest_id,ref_date=validation_date)
+    if version is None:
+        xp_earned = QUEST_BASE_XP * (quest.time_coeff + quest.difficulty_coeff + quest.importance_coeff)
+    else:   
+        xp_earned = QUEST_BASE_XP * (version.time_coeff + version.difficulty_coeff + version.importance_coeff)
+
+    session.add(QuestValidation(quest_id=quest_id, validation_date=validation_date, xp_earned=xp_earned))
     session.commit()
     return True
 
@@ -79,12 +176,11 @@ def compute_streak(quest: Quest, validation_dates: set[date], ref_date: date):
         return 0
 
     if ref_date > get_previous_period_date(quest.frequency_mode, date.today()) and ref_date <= date.today():
-        print(quest.quest_id, "is in current period")
         # streak à partir de la période précédente si on est dans la période actuelle (qui n'est pas encore terminée).
         current_date = get_previous_period_date(quest.frequency_mode, ref_date)
         streak = 1 if is_frequency_reached(quest, validation_dates, ref_date) else 0
     else :
-        print(quest.quest_id, "is NOT in current period")
+        
         current_date = ref_date
         streak = 0
 

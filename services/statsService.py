@@ -9,16 +9,14 @@ from config import *
 #========================
 
 def compute_total_xp_cumulated(session: Session):
-    # Get number of checks for each quest
-    statement = (select(Quest, func.count().label('total'))
-                     .join(QuestValidation, QuestValidation.quest_id == Quest.quest_id)
-                     .group_by(Quest.quest_id))
-    result = session.exec(statement).all()
-
-    total_xp_cumulated = 0
-    for hab in result:
-        total_xp_cumulated += hab[1] * QUEST_BASE_XP * (hab[0].time_coeff + hab[0].difficulty_coeff + hab[0].importance_coeff)
-    return total_xp_cumulated
+    # Sum of xp_earned from QuestValidation table
+    statement = select(func.sum(QuestValidation.xp_earned))
+    res = session.exec(statement).one()
+    if res is None: 
+        return 0 
+    else: 
+        return res
+    
 
 def compute_actual_level(session: Session):
 
